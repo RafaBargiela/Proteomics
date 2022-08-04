@@ -1,7 +1,11 @@
 # Author: Rafael Bargiela, PhD. Bangor University. 2021
 
-# log2 transformation, groups filtering and Median Normalization
+# Function for log2 transformation, groups filtering and Median Normalization.
 ################################################################
+# This function uses a raw intensities table and return filtered and normalized data on a data.frame
+# Data is transformed to log2 values, then filtered to those proteins present in a minimum percentage of samples on each group.
+# Finally, data is normalized over the median of each sample
+
       # P: Matrix with raw proteins intensities.
       # groups.vector: Vector of length equal to number of columns in P, with the group assignation for each column (sample)
       # min.count.per : Minimum count of samples on each group where each protein should be present (default 60%, set 0 to include all proteins)
