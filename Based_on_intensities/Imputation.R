@@ -14,6 +14,9 @@
 #           so data could look a bit different.
 
 Imputation<-function(M.filt.Norm, method="MinProb", q = 0.01, tune.sigma = 1){
+  
+  require(tmvtnorm)
+  
   if(grepl("MinProb|QRILC",method)==FALSE){stop("Incorrect method name, only 'MinProb' or 'QRILC' are accepted")}
   
   M<-M.filt.Norm # Previously filtered matrix with proteins with more than >60% of non-NA values
