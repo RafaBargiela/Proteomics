@@ -10,6 +10,9 @@
     # tune.sigma: constant to modify the SD based on the median of the sd of all proteins. If 1, SD for imputed values is equal to the sd of the non-zero values.
     # q: Probability of the minimum quantile to get the random distrubution based on SD for imputation
     
+# WARNING: Imputation produce slightly different data for missing values each time you run it due to the random assignation, 
+#           so data could look a bit different.
+
 Imputation<-function(M.filt.Norm, method="MinProb", q = 0.01, tune.sigma = 1){
   if(grepl("MinProb|QRILC",method)==FALSE){stop("Incorrect method name, only 'MinProb' or 'QRILC' are accepted")}
   
