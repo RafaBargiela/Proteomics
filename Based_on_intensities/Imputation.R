@@ -30,7 +30,8 @@ Imputation<-function(M.filt.Norm, method="MinProb", q = 0.01, tune.sigma = 1){
     print("## DATA IMPUTATION METHOD: Quantile regression (QRILC) ##")
     require(tmvtnorm)
   }
-  
+
+  set.seed(50) # To keep the randomly generated data
   for(c in 1:ncol(M)){
     sample<-M[,c]
     sample[is.infinite(sample)]<-NA # if inf haven't been switch to NA yet
