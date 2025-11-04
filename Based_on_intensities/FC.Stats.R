@@ -1,4 +1,4 @@
-# Author: Rafael Bargiela, PhD. Bangor University (UK). 2021
+# Author: Rafael Bargiela, PhD. Instituto de Catálisis y Petroleoquímica, ICP (CSIC). Last update: 4th of November, 2025
 
 # Fold change calculation and t.test statistics
 ################################################
@@ -9,11 +9,67 @@
     # M.Imputed: Previously filtered and normalized matrix (usually log-2 transformed). Usually, data was also previously imputed.
     # groups.vector: Vector assigning groups to each of the samples in matrix (columns). Only TWO different groups allowed.
     ## WARNING: Regard that groups.vector is not equal to the vector used on previous functions
+    # LongAnalysisM : Data.frame containing Intensity, Time, Individuals and Group columns to considered in case on longitudinal analysis. Default NULL
+    # method : Method for random effect measure and removal in case of longitudinal analysis. Default limma. WARNING: lme4 is not ready yet
+FC.Stats<-function(M.filt.Norm.Imputed,groups.vector,LongAnalysisM=NULL,method="limma"){
+  M<-M.filt.Norm.Imputed # Previously filtered and normalized matrix (usually log-2 transformed)
+  FC.Stats<-{}
+  ## In case of Longitudinal (time) analysis
+  if(is.null(LongAnalysisM)==FALSE){
+    message("NOTE: LongAnalysisM must have 'Time', 'Individuals' and 'Group' columns for each sample")
+    if(method=="lme4"){
+    ### lme4 method
+    require(lme4)
+    message("Using Linear Mixed Models (LMM),with lme4 package")
+    message("Current Linear Mixed model is: Intensity~Group+(1|Individuals)")
+    warning("THIS METHOD NEEDS TO BE POLISH BEFORE USING IT")
+      #### Transforming matrix to use it with lmer
+      Time<-vector("character")
+      Intensity<-vector("numeric")
+      Group<-vector("character")
+      Individuals<-vector("character")
+      ID<-vector("character")       
+      for(r in 1:nrow(M)){
+        ID<-append(ID,rep(rownames(M)[r],ncol(M)),length(ID))
+        Intensity<-append(Intensity,M[r,],length(Intensity))
+        Group<-append(Group,LongAnalysisM[,"Group"],length(Group))
+        Individuals<-append(Individuals,LongAnalysisM[,"Individuals"],length(Individuals))
+        Time<-append(Time,LongAnalysisM[,"Time"],length(Time))
+      }
+      M.lmer<-data.frame(ID=ID,Intensity=Intensity,Time=Time,Group=Group,Individuals=Individuals)
+      lmer.mod<-lmer(Intensity~Group+(1|Individuals),data=M.lmer)
+      lmer.mod.preds<-predict(lmer.mod)
+      M.lmer.fit<-matrix(lmer.mod.preds,nr=length(unique(ID)),byrow=TRUE)
+      colnames(M.lmer.fit)<-colnames(M)
+      rownames(M.lmer.fit)<-rownames(M)
+      FC.Stats$Mixed.Model.Fit.lme4<-M.lmer.fit
+      message("Using Imputed data after random effect removal")
+      M<-FC.Stats$Mixed.Model.Fit.lme4
 
-FC.Stats<-function(M.Imputed,groups.vector){
-  
-  require(limma)
-  
+    }else{
+      if(method=="limma"){
+        ### Limma method with Humanzee package
+        require(limma)
+        require(Humanzee)
+        message("Using Mixed Models (MM), with limma and Humanzee package")
+        message("Current Linear Mixed model is: Intensity~1+Individuals; with Group as block")   
+        design<-model.matrix(~1+Individuals,data=LongAnalysisM)
+        block<-LongAnalysisM[,"Group"]
+        dup_corrs <- duplicateCorrelation(M,design = design, block = block)
+        mdl.fit<-Humanzee::ruv_mixed_model(M,ndups = 1,design = design, block = block,correlation = dup_corrs$cons)
+        M.fit <- t( design %*% t(mdl.fit$coef) ) + mdl.fit$resid
+        FC.Stats$Mixed.Model.Fit<-M.fit
+        message("Using Imputed data after random effect removal")
+        M<-FC.Stats$Mixed.Model.Fit.limma
+      }else{
+        stop("Wrong method selection for Longitudinal Analysis")
+      }
+    }
+  }else{
+    message("Using Imputed data without previous random effect removal")
+  }
+
+
   G<-unique(groups.vector)      
   G1<-M[,grep(G[1],groups.vector,value=FALSE)]
   G2<-M[,grep(G[2],groups.vector,value=FALSE)]    
@@ -40,10 +96,11 @@ FC.Stats<-function(M.Imputed,groups.vector){
       2*pt(q=t.test[x],df=(n1[x]+n2[x]-2),lower.tail=FALSE)
     }
   })
-  # t.testP<-sapply(1:nrow(G1),function(x){t.test(na.omit(G1[x,]),na.omit(G2[x,]),var.equal=TRUE)$p.value})
-  
-  
+
+  p.values.adj<-p.adjust(p.values,method="BH")
+
   # Limma method
+  require(limma)
   Dat<-data.frame(M)
   Dat[is.na(Dat)]<-0
   groups<-factor(groups.vector)
@@ -54,6 +111,9 @@ FC.Stats<-function(M.Imputed,groups.vector){
   res<-res[rownames(M),]
   moderated.p.values<-res[,4]
   moderated.p.values.adj<-res[,5]
-  FC.Stats<-matrix(c(G1av,G2av,FC,p.values,moderated.p.values,moderated.p.values.adj),nc=6,dimnames=list(rownames(M),c(paste(G[1],"log2 mean"),paste(G[2],"log2 mean"),"Fold change","t.test p-values","moderated-t.test p-values","moderated-t.test adj. p-values")))
-  return(FC.Stats)
+  FC.Stats$DEA<-matrix(c(G1av,G2av,FC,p.values,p.values.adj,moderated.p.values,moderated.p.values.adj),nc=7,dimnames=list(rownames(M),c(paste(G[1],"log2 mean"),paste(G[2],"log2 mean"),"Fold change","t.test p-values","t-test adj. p-values","moderated-t.test p-values","moderated-t.test adj. p-values")))
+  
+
+
+  return(FC.Stats) 
 }
