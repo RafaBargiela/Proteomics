@@ -58,7 +58,7 @@ FC.Stats<-function(M.filt.Norm.Imputed,groups.vector,LongAnalysisM=NULL,method="
         dup_corrs <- duplicateCorrelation(M,design = design, block = block)
         mdl.fit<-Humanzee::ruv_mixed_model(M,ndups = 1,design = design, block = block,correlation = dup_corrs$cons)
         M.fit <- t( design %*% t(mdl.fit$coef) ) + mdl.fit$resid
-        FC.Stats$Mixed.Model.Fit<-M.fit
+        FC.Stats$Mixed.Model.Fit.limma<-M.fit
         message("Using Imputed data after random effect removal")
         M<-FC.Stats$Mixed.Model.Fit.limma
       }else{
