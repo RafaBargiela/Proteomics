@@ -6,10 +6,11 @@
   # Here we get the fold change among two designated groups and calculate statistical significant differences among each or the proteins, based on 
   # t-test and moderate t-test based on limma package
 
-    # M.Imputed: Previously filtered and normalized matrix (usually log-2 transformed). Usually, data was also previously imputed.
-    # groups.vector: Vector assigning groups to each of the samples in matrix (columns). Only TWO different groups allowed.
+    # M.Imputed: Previously filtered and normalized matrix (usually log-2 transformed). Usually, data was also previously imputed. Mandatory
+    # groups.vector: character vector with the TWO groups to compare. Make sure they exists in Metadtata table in the Group column. Mandatory
     ## WARNING: Regard that groups.vector is not equal to the vector used on previous functions
-    # LongAnalysisM : Data.frame containing Intensity, Time, Individuals and Group columns to considered in case on longitudinal analysis. Default NULL
+    # Metadata : Data.frame containing Intensity, Time, Individuals and Group columns to considered in case on longitudinal analysis. Mandatory
+    # LongAnalysis: Logical. If TRUE, mixed models are applied to remove any possible effect due to longitudinal analysis. Default FALSE.
     # method : Method for random effect measure and removal in case of longitudinal analysis. Default limma. WARNING: lme4 is not ready yet
 FC.Stats<-function(M.filt.Norm.Imputed,Metadata,groups.vector,LongAnalysis=FALSE,method="limma"){
   message("- NOTE: Make sure cols in M are in the same order than rows in Metadata -")
