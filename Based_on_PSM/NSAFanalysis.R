@@ -278,6 +278,7 @@ PSManalysis<-function(M,length.vector=NULL,Metadata,Metadata.group.col=NA,filter
             fit<-lmFit(Dat,des)
             fit2<-eBayes(fit)
             res<-topTable(fit2,number=nrow(Dat))
+            res<-res[rownames(Dat),]
             moderated.p.values<-res[,4]
             moderated.p.values.adj<-res[,5]
             p.vals<-cbind(moderated.p.values,moderated.p.values.adj)
